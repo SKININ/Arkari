@@ -1,0 +1,52 @@
+name: Build Arkari for Windows
+
+on:
+  workflow_dispatch: # 允许手动点击按钮触发编译
+
+jobs:
+  build:
+    runs-on: windows-2022 # 使用 GitHub 提供的 Windows Server 2022
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSVC and Ninja
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Install vcpkg dependencies
+      run: |
+        vcpkg install zlib:x64-windows-static
+        vcpkg install libLZMA:x64-windows-static
+        vcpkg install libxml2:x64-windows-static
+        echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+
+    - name: Configure CMake
+      run: |
+        mkdir build_ninja
+        cd build_ninja
+        cmake -G Ninja ..\llvm `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DLLVM_ENABLE_PROJECTS="clang" `
+          -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
+          -DCMAKE_INSTALL_PREFIX="./install" `
+          -DLLVM_INCLUDE_TESTS=OFF `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DCMAKE_CXX_FLAGS="/utf-8" `
+          -DCMAKE_C_FLAGS="/utf-8"
+
+    - name: Build
+      run: |
+        cd build_ninja
+        ninja
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: arkari-clang-llvm18
+        path: |
+          build_ninja/bin/clang.exe
+          build_ninja/bin/clang++.exe
