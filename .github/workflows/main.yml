@@ -1,11 +1,11 @@
 name: Build Arkari for Windows
 
 on:
-  workflow_dispatch: # 允许手动点击按钮触发编译
+  workflow_dispatch: # 允许手动触发编译
 
 jobs:
   build:
-    runs-on: windows-2022 # 使用 GitHub 提供的 Windows Server 2022
+    runs-on: windows-2022
 
     steps:
     - name: Checkout code
@@ -36,17 +36,18 @@ jobs:
           -DLLVM_INCLUDE_TESTS=OFF `
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
           -DCMAKE_CXX_FLAGS="/utf-8" `
-          -DCMAKE_C_FLAGS="/utf-8"
+          -DCMAKE_C_FLAGS="/utf-8" `
+          -DPACKAGE_VENDOR="Protect"
 
     - name: Build
       run: |
         cd build_ninja
         ninja
 
-    - name: Upload Artifact
+    - name: Upload Complete Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: arkari-clang-llvm18
+        name: arkari-clang-llvm18-complete
         path: |
-          build_ninja/bin/clang.exe
-          build_ninja/bin/clang++.exe
+          build_ninja/bin/
+          build_ninja/lib/clang/
