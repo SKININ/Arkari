@@ -1,7 +1,7 @@
 name: Build Arkari for Windows
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发编译
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 【新增步】核心伪装：在编译前强行篡改 Git 仓库地址
+    # 【核心伪装】在编译前强行篡改 Git 仓库地址，防止源码路径泄露
     - name: Hide Repository URL
       run: |
         git remote set-url origin https://github.com/Protect/Protect.git
@@ -43,7 +43,9 @@ jobs:
           -DCMAKE_CXX_FLAGS="/utf-8 /fno-ident" `
           -DCMAKE_C_FLAGS="/utf-8 /fno-ident" `
           -DPACKAGE_VENDOR="Protect" `
-          -DLLVM_APPEND_VC_REV=OFF
+          -DLLVM_APPEND_VC_REV=OFF `
+          -DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-w64-windows-gnu `
+          -DLLVM_HOST_TRIPLE=x86_64-w64-windows-gnu
 
     - name: Build
       run: |
